@@ -5,6 +5,7 @@ const multer = require("multer");
 const companyController = require("../../controller/superAdmin/superAdminController");
 const plan=require("../../models/plan/planModel");
 const planController=require("../../controller/plan/planLogic");
+const { createSchool } = require("../../controller/superAdmin/schoolCreate");
 
 
 // ✅ Memory storage (IMPORTANT for R2)
@@ -34,10 +35,6 @@ router.post("/login", companyController.loginCompany);
 router.post("/update-password", companyController.updatePassword);
 router.post("/create-plan", planController.createPlan);
 router.post("/edit-plan", planController.editPlan);
-
-
-
-
-
+router.post("/create-school", createSchool);
 
 module.exports = router;
