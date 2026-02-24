@@ -35,6 +35,7 @@ router.post("/login", companyController.loginCompany);
 router.post("/update-password", companyController.updatePassword);
 router.post("/create-plan", planController.createPlan);
 router.post("/edit-plan", planController.editPlan);
-router.post("/create-school", createSchool);
+router.get("/get-plans", planController.getPlans);
+router.post("/create-school", upload.single("logo"), createSchool);
 
 module.exports = router;

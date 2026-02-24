@@ -5,17 +5,23 @@ const SchoolUser = require("../../models/CommonLogin/schoolUserModel"); // ✅ N
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const transporter = require("../../config/emailConfig/emailConfig");
+const { PutObjectCommand } = require("@aws-sdk/client-s3");
+const r2 = require("../../config/cloudConfig/cloudConfig");
 
 const createSchool = async (req, res) => {
   try {
-    const { companyId, schoolname, email, phone, address, max_class, session_type, session, plan_id } = req.body;
+    const { 
+      companyId, schoolname, email, phone, address, max_class, session_type, session, plan_id,
+      udise_code, alternate_phone, website, classes, boards, admin_name, admin_mobile, modules, primary_color, secondary_color
+    } = req.body;
 
     const company = await Company.findById(companyId);
     const plan = await Plan.findById(plan_id);
     if (!company || !plan) return res.status(404).json({ success: false, message: "Company or Plan not found" });
 
     // Check email uniqueness
-    const existingUser = await SchoolUser.findOne({ email });
+    const normalizedEmail = email.trim().toLowerCase();
+    const existingUser = await SchoolUser.findOne({ email: normalizedEmail });
     if (existingUser) return res.status(400).json({ success: false, message: "Email already registered" });
 
     const schoolCount = await School.countDocuments({ companyId });
@@ -23,11 +29,37 @@ const createSchool = async (req, res) => {
     const expiryDate = new Date();
     expiryDate.setDate(expiryDate.getDate() + plan.duration);
 
+    // Parse JSON strings if sent via FormData
+    const parsedAddress = typeof address === 'string' ? JSON.parse(address) : address;
+    const parsedClasses = typeof classes === 'string' ? JSON.parse(classes) : classes;
+    const parsedBoards = typeof boards === 'string' ? JSON.parse(boards) : boards;
+    const parsedModules = typeof modules === 'string' ? JSON.parse(modules) : modules;
+
+    // Handle logo upload to R2
+    let logoUrl = "";
+    if (req.file) {
+      const folderName = "schoolLogos";
+      const cleanFileName = Date.now() + "-" + req.file.originalname.replace(/\s+/g, "-").toLowerCase();
+      const key = `${folderName}/${cleanFileName}`;
+
+      const command = new PutObjectCommand({
+        Bucket: process.env.R2_BUCKET_NAME,
+        Key: key,
+        Body: req.file.buffer,
+        ContentType: req.file.mimetype,
+      });
+
+      await r2.send(command);
+      logoUrl = `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${process.env.R2_BUCKET_NAME}/${key}`;
+    }
+
     // 1. Create School (No password here)
     const school = new School({
-      companyId, schoolid, schoolname, email, phone, address, max_class, 
+      companyId, schoolid, schoolname, email: normalizedEmail, phone, address: parsedAddress, max_class, 
       session_type: session_type || 'Annual', session: session || null, 
-      plan_id: plan._id, valid_till: expiryDate, status: "active"
+      plan_id: plan._id, valid_till: expiryDate, status: "active",
+      udise_code, alternate_phone, website, classes: parsedClasses, boards: parsedBoards,
+      admin_name, admin_mobile, modules: parsedModules, primary_color, secondary_color, logo: logoUrl
     });
     await school.save();
 
@@ -36,12 +68,14 @@ const createSchool = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(tempPassword, salt);
 
+
     const newAdminUser = new SchoolUser({
       schoolId: school._id, 
-      name: schoolname, 
-      email: email, 
+      name: admin_name || schoolname, 
+      email: normalizedEmail, 
       password: hashedPassword, 
-      role: "school_admin"
+      role: "school_admin",
+      firstLogin: 0 // Explicitly set firstLogin to 0
     });
     await newAdminUser.save();
 

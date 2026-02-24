@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const schoolUserSchema = new mongoose.Schema({
   schoolId: { type: mongoose.Schema.Types.ObjectId, ref: "School", required: true },
   name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
+  email: { type: String, required: true, unique: true, trim: true, lowercase: true },
   phone: { type: String },
   password: { type: String, required: true },
   role: { type: String, enum: ['school_admin', 'teacher', 'student'], required: true },

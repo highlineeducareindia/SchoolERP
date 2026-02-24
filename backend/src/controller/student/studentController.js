@@ -1,36 +1,46 @@
 const SchoolUser = require("../../models/CommonLogin/schoolUserModel");
-const TeacherProfile = require("../../models/Admin/teacherModel"); // Import the new model
+const Student = require("../../models/Admin/studentModel");
 const bcrypt = require("bcryptjs");
 const transporter = require("../../config/emailConfig/emailConfig");
 const { PutObjectCommand } = require("@aws-sdk/client-s3");
 const r2 = require("../../config/cloudConfig/cloudConfig");
 
-const createTeacher = async (req, res) => {
+const registerStudent = async (req, res) => {
   try {
-    const schoolId = req.user.schoolId; // Comes from Middleware
+    const schoolId = req.user.schoolId;
     const { 
-      name, email, phone, 
-      employeeId, aadhaar, dob, gender, bloodGroup, maritalStatus,
-      designation, specialization, joiningDate, employmentType, experienceYears,
-      qualification, university, passingYear,
-      fullAddress, city, state, country, pincode,
-      salary,
-      accountHolder, bankName, accountNumber, ifscCode
+      admissionNo, class: className, section, admissionDate,
+      fullName, dob, gender, bloodGroup, aadhar,
+      fatherName, motherName, phone, email,
+      transportRequired
     } = req.body;
+
+    // Parse Address (FormData sends it as string)
+    let parsedAddress = {};
+    try {
+      parsedAddress = req.body.address ? JSON.parse(req.body.address) : {};
+    } catch (error) {
+      console.error("Address parsing error:", error);
+      parsedAddress = {}; 
+    }
 
     // Validation
     const errors = [];
-    if (!name) errors.push("Name is required");
-    if (!email) errors.push("Email is required");
-    if (!phone) errors.push("Phone is required");
+    if (!admissionNo) errors.push("Admission Number is required");
+    if (!className) errors.push("Class is required");
+    if (!section) errors.push("Section is required");
+    if (!admissionDate) errors.push("Admission Date is required");
+    if (!fullName) errors.push("Full Name is required");
     if (!dob) errors.push("Date of Birth is required");
     if (!gender) errors.push("Gender is required");
-    if (!designation) errors.push("Designation is required");
-    if (!joiningDate) errors.push("Joining Date is required");
-    if (!fullAddress) errors.push("Address is required");
+    if (!fatherName) errors.push("Father's Name is required");
+    if (!motherName) errors.push("Mother's Name is required");
+    if (!phone) errors.push("Phone Number is required");
+    if (!email) errors.push("Email is required");
+    if (!parsedAddress.fullAddress) errors.push("Full Address is required");
 
     if (errors.length > 0) {
-      return res.status(400).json({ success: false, message: "Validation Validation Failed", errors });
+      return res.status(400).json({ success: false, message: "Validation Failed", errors });
     }
 
     // Check if email already exists
@@ -43,22 +53,22 @@ const createTeacher = async (req, res) => {
     const hashedPassword = await bcrypt.hash(tempPassword, salt);
 
     // 1. Create User (Login Access)
-    const newTeacherUser = new SchoolUser({
+    const newStudentUser = new SchoolUser({
       schoolId: schoolId, 
-      name, 
+      name: fullName, 
       email, 
       phone,
       password: hashedPassword, 
-      role: "teacher"
+      role: "student"
     });
-    await newTeacherUser.save();
+    await newStudentUser.save();
 
     // Handle Documents Upload to R2
     const uploadedDocs = {};
     if (req.files) {
       for (const key in req.files) {
         const file = req.files[key][0];
-        const folderName = "teacherDocuments";
+        const folderName = "studentDocuments";
         const cleanFileName = Date.now() + "-" + file.originalname.replace(/\s+/g, "-").toLowerCase();
         const s3Key = `${folderName}/${cleanFileName}`;
 
@@ -75,45 +85,37 @@ const createTeacher = async (req, res) => {
     }
 
     // 2. Create Profile (Detailed Info)
-    const newTeacherProfile = new TeacherProfile({
-      userId: newTeacherUser._id,
+    const newStudentProfile = new Student({
+      userId: newStudentUser._id,
       schoolId: schoolId,
-      employeeId,
-      aadhaar,
+      admissionNo,
+      class: className,
+      section,
+      admissionDate,
+      fullName,
       dob,
       gender,
       bloodGroup,
-      maritalStatus,
-      designation,
-      specialization,
-      joiningDate,
-      employmentType,
-      experienceYears,
-      qualification,
-      university,
-      passingYear,
-      address: {
-        fullAddress, city, state, country, pincode
-      },
-      salary,
-      bankDetails: {
-        accountHolder, bankName, accountNumber, ifscCode
-      },
+      aadhar,
+      fatherName,
+      motherName,
+      phone,
+      email,
+      address: parsedAddress,
       documents: {
-        profilePhoto: uploadedDocs.profilePhoto || "",
-        aadhaarCard: uploadedDocs.aadhaarCard || "",
-        qualificationProof: uploadedDocs.qualification || "",
-        experienceProof: uploadedDocs.experience || ""
-      }
+        studentPhoto: uploadedDocs.studentPhoto || "",
+        birthCertificate: uploadedDocs.birthCertificate || ""
+      },
+      transportRequired: transportRequired === 'Yes' || transportRequired === true
     });
     
-    await newTeacherProfile.save();
+    await newStudentProfile.save();
 
-    // Send Email to Teacher
+    // Send Email to Student
     await transporter.sendMail({
       from: `"Highline SchoolERP Support" <${process.env.EMAIL_USER}>`,
       to: email,
-      subject: "Welcome to Highline SchoolERP – Your Teacher Credentials",
+      subject: "Welcome to Highline SchoolERP – Your Student Credentials",
       html: `
       <div style="margin:0;padding:0;background-color:#f4f6f9;font-family:Arial,Helvetica,sans-serif;">
         <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f6f9;padding:30px 0;">
@@ -128,8 +130,8 @@ const createTeacher = async (req, res) => {
                 </tr>
                 <tr>
                   <td style="padding:30px;color:#333333;">
-                    <p style="font-size:16px;margin-bottom:15px;">Dear <strong>${name}</strong>,</p>
-                    <p style="font-size:15px;line-height:1.6;">Your teacher account has been successfully created.</p>
+                    <p style="font-size:16px;margin-bottom:15px;">Dear <strong>${fullName}</strong>,</p>
+                    <p style="font-size:15px;line-height:1.6;">Your student account has been successfully created.</p>
                     <div style="background:#f8f9fa;border-left:4px solid #0d6efd;padding:15px;margin:20px 0;border-radius:4px;">
                       <p style="margin:5px 0;"><strong>Login Email:</strong> ${email}</p>
                       <p style="margin:5px 0;"><strong>Temporary Password:</strong> ${tempPassword}</p>
@@ -148,13 +150,14 @@ const createTeacher = async (req, res) => {
 
     res.status(201).json({
       success: true, 
-      message: "Teacher account created successfully!",
-      userId: newTeacherUser._id,
-      profileId: newTeacherProfile._id
+      message: "Student registered successfully!",
+      userId: newStudentUser._id,
+      profileId: newStudentProfile._id
     });
   } catch (error) {
-    console.error("Create Teacher Error:", error);
+    console.error("Register Student Error:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
-module.exports = { createTeacher };
+
+module.exports = { registerStudent };

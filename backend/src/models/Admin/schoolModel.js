@@ -51,7 +51,17 @@ const schoolSchema = new mongoose.Schema({
     default: 'active' 
   },
  
-
+  udise_code: String,
+  alternate_phone: String,
+  website: String,
+  classes: [String],
+  boards: [String],
+  admin_name: String,
+  admin_mobile: String,
+  modules: [String],
+  primary_color: String,
+  secondary_color: String,
+  logo: String
 
 }, { timestamps: true });
 

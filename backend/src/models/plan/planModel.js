@@ -2,7 +2,6 @@ const mongoose = require("mongoose");
 const planSchema = new mongoose.Schema({
  name:{
     type:String,
-    enum:["Basic","Pro","Enterprise"],
     required:true
  },
  MonthlyPrice:{

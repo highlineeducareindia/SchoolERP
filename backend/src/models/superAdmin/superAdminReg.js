@@ -14,7 +14,7 @@ const companySchema = new mongoose.Schema({
     position: String,
     mob: String
   },
-  companyEmail: String,
+  companyEmail: { type: String, unique: true, required: true },
   companyMobile: String,
   
 planId: {

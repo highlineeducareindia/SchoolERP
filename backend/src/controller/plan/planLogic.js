@@ -31,8 +31,19 @@ const editPlan = async (req, res) => {
     }   
 };
 
+const getPlans = async (req, res) => {
+    try {
+        const plans = await plan.find();
+        res.json({ success: true, plans });
+    } catch (error) {
+        console.error("GET PLANS ERROR:", error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
  
 module.exports = {
   createPlan,
-  editPlan
+  editPlan,
+  getPlans
 };

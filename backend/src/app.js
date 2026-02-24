@@ -14,6 +14,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/superadmin", require("./routes/superAdmin/superAdminRoutes"));
 app.use("/api/admin", require("./routes/Admin/schoolRoutes"));
+app.use("/api/common", require("./routes/common/commonRoutes"));
 
 
 
