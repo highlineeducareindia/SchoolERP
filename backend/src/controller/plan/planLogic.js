@@ -1,0 +1,38 @@
+  const plan = require("../../models/plan/planModel");
+  
+  const createPlan = async (req, res) => {
+  try {
+    const { name, MonthlyPrice, AnnualPrice, duration } = req.body;
+    const newPlan = new plan({ name, MonthlyPrice, AnnualPrice, duration });
+    await newPlan.save();
+    res.json({ success: true, message: "Plan created successfully", plan: newPlan });
+  } catch (error) {
+    console.error("CREATE PLAN ERROR:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+const editPlan = async (req, res) => {
+    try {
+        const { planId, name, MonthlyPrice, AnnualPrice } = req.body;
+        const updatedPlan = await plan.findByIdAndUpdate(
+            planId,
+            { name, MonthlyPrice, AnnualPrice },
+            { new: true }
+        );
+        if (!updatedPlan) { 
+            return res.status(404).json({ success: false, message: "Plan not found" });
+        }
+        res.json({ success: true, message: "Plan updated successfully", plan: updatedPlan });
+
+    } catch (error) {
+        console.error("EDIT PLAN ERROR:", error);
+        res.status(500).json({ success: false, message: error.message });
+    }   
+};
+
+ 
+module.exports = {
+  createPlan,
+  editPlan
+};
