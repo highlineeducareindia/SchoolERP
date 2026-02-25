@@ -14,12 +14,18 @@ const createPlan = async (req, res) => {
 
 const editPlan = async (req, res) => {
     try {
-        const { planId, name, MonthlyPrice, AnnualPrice, studentLimit } = req.body;
+        const { planId, ...updateData } = req.body;
+        
+        if (!planId) {
+            return res.status(400).json({ success: false, message: "Plan ID is required" });
+        }
+
         const updatedPlan = await plan.findByIdAndUpdate(
             planId,
-            { name, MonthlyPrice, AnnualPrice, studentLimit },
+            updateData,
             { new: true }
         );
+
         if (!updatedPlan) { 
             return res.status(404).json({ success: false, message: "Plan not found" });
         }
@@ -41,9 +47,26 @@ const getPlans = async (req, res) => {
     }
 };
 
+const deletePlan = async (req, res) => {
+    try {
+        const { planId } = req.body;    
+        if (!planId) {
+            return res.status(400).json({ success: false, message: "Plan ID is required" });
+        }
+        const deletedPlan = await plan.findByIdAndDelete(planId);
+        if (!deletedPlan) {
+            return res.status(404).json({ success: false, message: "Plan not found" });
+        }
+        res.json({ success: true, message: "Plan deleted successfully" });
+    } catch (error) {
+        console.error("DELETE PLAN ERROR:", error);
+        res.status(500).json({ success: false, message: error.message });
+    }   
+};
  
 module.exports = {
   createPlan,
   editPlan,
-  getPlans
+  getPlans,
+  deletePlan
 };
