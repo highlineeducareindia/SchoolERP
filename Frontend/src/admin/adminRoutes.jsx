@@ -7,6 +7,9 @@ import Dashboard from "./pages/Dashboard";
 import StudentRegistration from "./pages/StudentRegister";
 import TeacherRegistration from "./pages/TeacherRegister";
 import AuthGuard from "../common/AuthGuard";
+import ViewStudents from "./pages/ViewStudents";
+import ViewTeacher from "./pages/ViewTeachers";
+import SchoolPlanView from "./pages/SchoolPlanView";
 
 const SchoolRoot = () => <Outlet />;
 
@@ -24,7 +27,7 @@ export const adminRoutes = {
     },
     // Protected Routes
     {
-      element: <AuthGuard allowedRoles={["school_admin"]} />,
+      // element: <AuthGuard allowedRoles={["school_admin"]} />,
       children: [
         {
           path: "update-password",
@@ -46,9 +49,22 @@ export const adminRoutes = {
               element: <StudentRegistration />,
             },
             {
+              path: "view-students",
+              element: <ViewStudents />,
+            },
+            {
               path: "teachers",
               element: <TeacherRegistration />,
+            },
+            {
+              path:"view-teachers",
+              element:<ViewTeacher />,
+            },
+            {
+              path: "plans",
+              element: <SchoolPlanView />,
             }
+            
           ],
         },
       ]

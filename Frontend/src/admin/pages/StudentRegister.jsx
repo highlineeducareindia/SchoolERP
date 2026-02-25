@@ -10,6 +10,7 @@ import {
   ChevronLeft
 } from "lucide-react";
 import LiquidButton from "../../components/LiquidButton";
+import apiClient from "../../api/api";
 
 const StudentRegistration = () => {
   const [formData, setFormData] = React.useState({});
@@ -44,69 +45,52 @@ const StudentRegistration = () => {
     setFormData({ ...formData, [e.target.name]: e.target.files[0] });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
 
-    // Validation
-    const requiredFields = [
-      "admissionNo", "class", "section", "admissionDate", 
-      "fullName", "dob", "gender", 
-      "fatherName", "motherName", "phone", "email"
-    ];
+  try {
+    const data = new FormData();
 
-    const missingFields = requiredFields.filter(field => !formData[field]);
-
-    // Check nested address field specifically
-    if (!formData.address?.fullAddress) {
-      missingFields.push("Full Address");
-    }
-
-    if (missingFields.length > 0) {
-      alert(`Please fill the following required fields:\n- ${missingFields.join("\n- ")}`);
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8080";
-      
-      const data = new FormData();
-      Object.keys(formData).forEach(key => {
-        if (key === 'address') {
-          data.append('address', JSON.stringify(formData[key]));
-        } else {
-          data.append(key, formData[key]);
-        }
-      });
-
-      const response = await fetch(`${apiUrl}/api/admin/register-student`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`
-        },
-        body: data
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        alert("Student Registered Successfully!");
+    Object.keys(formData).forEach((key) => {
+      if (key === "address") {
+        data.append("address", JSON.stringify(formData[key]));
       } else {
-        if (result.errors) {
-          alert(result.message + ":\n" + result.errors.join("\n"));
-        } else {
-          alert(result.message || "Registration Failed");
-        }
+        data.append(key, formData[key]);
       }
-    } catch (error) {
-      console.error("Error:", error);
-      alert("Something went wrong");
-    } finally {
-      setLoading(false);
-    }
-  };
+    });
 
+    const res = await apiClient.post(
+      "/api/admin/register-student",
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+
+    if (res.data.success) {
+      alert("Student Registered Successfully ✅");
+      setFormData({});
+    } else {
+      alert(res.data.message || "Registration Failed");
+    }
+
+  } catch (err) {
+    console.error(err);
+
+    if (err.response?.data?.message) {
+      alert(err.response.data.message);
+    } else {
+      alert("Server Error");
+    }
+
+  } finally {
+    setLoading(false);
+  }
+};
   const inputBase = `w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-[${themeAccent}] focus:bg-white transition font-bold text-gray-700 text-sm shadow-sm`;
   const labelBase = "text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block";
   const sectionCard = "bg-white p-6 rounded-2xl border border-gray-100 shadow-sm";
@@ -118,12 +102,9 @@ const StudentRegistration = () => {
       <div className="max-w-6xl mx-auto border-b border-gray-200 pb-4 mb-10 flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-[#1E293B] uppercase tracking-tight flex items-center gap-3">
-            <button className="p-2 bg-white rounded-lg border border-gray-100 hover:shadow-sm transition">
-              <ChevronLeft size={18} className="text-gray-400" />
-            </button>
             Student Enrollment
           </h1>
-          <p className="text-gray-500 text-sm ml-12">
+          <p className="text-gray-500 text-sm ">
             Register new students and assign academic batches.
           </p>
         </div>

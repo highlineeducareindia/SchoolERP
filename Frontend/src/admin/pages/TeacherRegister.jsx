@@ -95,12 +95,10 @@ const TeacherRegistration = () => {
       <div className="max-w-6xl mx-auto border-b border-gray-200 pb-4 mb-10 flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-[#1E293B] uppercase tracking-tight flex items-center gap-3">
-            <button className="p-2 bg-white rounded-lg border border-gray-100 hover:shadow-sm transition">
-              <ChevronLeft size={18} className="text-gray-400" />
-            </button>
+            
             Staff Onboarding
           </h1>
-          <p className="text-gray-500 text-sm ml-12">
+          <p className="text-gray-500 text-sm ">
             Register a new teacher and set up professional credentials.
           </p>
         </div>

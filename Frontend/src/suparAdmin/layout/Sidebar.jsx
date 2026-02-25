@@ -19,6 +19,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
     { name: "Companies", path: "/super-admin/company", icon: <FaBuilding /> },
     { name: "Admins", path: "/super-admin/admins", icon: <FaUsers /> },
     { name: "Plans", path: "/super-admin/plans", icon: <FaUsers /> },
+    {name:"View Plans", path:"/super-admin/view-plans", icon:<FaUsers />},
     {
       name: "School Registration",
       path: "/super-admin/school-register",
@@ -29,6 +30,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
       path: "/super-admin/company-register",
       icon: <FaUsers />,
     },
+
     { name: "Settings", path: "/super-admin/settings", icon: <FaCog /> },
   ];
   const navigate = useNavigate();

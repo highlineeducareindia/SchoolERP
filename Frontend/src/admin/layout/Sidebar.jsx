@@ -5,13 +5,18 @@ import {
   FaCog,
   FaSignOutAlt,
   FaUserShield,
+  FaRocket,
 } from "react-icons/fa";
 
 const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
   const menuItems = [
     { name: "Dashboard", path: "/admin/dashboard", icon: <FaTachometerAlt /> },
+    {name:"plans", path:"/admin/plans", icon:<FaRocket />},
     { name: "Students", path: "/admin/students", icon: <FaUserShield /> },
+    {name:"View Students", path:"/admin/view-students", icon:<FaUserShield />},
     { name: "Teachers", path: "/admin/teachers", icon: <FaUserShield /> },
+    {name:"View Teachers", path:"/admin/view-teachers", icon:<FaUserShield />},
+
     { name: "Settings", path: "/admin/settings", icon: <FaCog /> },
   ];
 
