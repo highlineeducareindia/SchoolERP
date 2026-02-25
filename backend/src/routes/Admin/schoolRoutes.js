@@ -6,6 +6,8 @@ const { createTeacher } = require("../../controller/teacher/createTeacher");
 const { registerStudent } = require("../../controller/student/studentController");
 const { studentLogin } = require("../../controller/student/studentLoginController");
 const { verifyToken } = require("../../middleware/authMiddleware/authmiddleware");
+const {getAllStudent} = require("../../controller/student/getAllstudent");
+const {getAllTeacher} = require("../../controller/teacher/getAllteacher");
 const upload = require("../../middleware/SuperAdmin/imageUpload");
 
 // Routes
@@ -33,5 +35,10 @@ router.post(
   ]), 
   registerStudent
 ); 
+
+
+router.get("/get-all-students", verifyToken, getAllStudent); // Route to get all students for Admin
+router.get("/get-all-teachers", verifyToken, getAllTeacher); // Route to get all teachers for Admin
+
 
 module.exports = router;

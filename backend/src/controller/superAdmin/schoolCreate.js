@@ -24,7 +24,7 @@ const createSchool = async (req, res) => {
     const existingUser = await SchoolUser.findOne({ email: normalizedEmail });
     if (existingUser) return res.status(400).json({ success: false, message: "Email already registered" });
 
-    const schoolCount = await School.countDocuments({ companyId });
+    const schoolCount = await School.countDocuments();
     const schoolid = "SCH-" + (schoolCount + 1).toString().padStart(3, "0");
     const expiryDate = new Date();
     expiryDate.setDate(expiryDate.getDate() + plan.duration);
