@@ -6,7 +6,7 @@ const schoolUserSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true, trim: true, lowercase: true },
   phone: { type: String },
   password: { type: String, required: true },
-  role: { type: String, enum: ['school_admin', 'teacher', 'student'], required: true },
+  role: { type: String, enum: ['school_admin', 'teacher'], required: true },
   status: { type: String, enum: ['active', 'inactive', 'suspended'], default: 'active' },
   firstLogin: { type: Number, default: 0 }
 }, { timestamps: true });

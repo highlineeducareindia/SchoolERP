@@ -1,20 +1,21 @@
 const mongoose = require("mongoose");
 
 const studentSchema = new mongoose.Schema({
-  userId: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: "SchoolUser", 
-    required: true, 
-    unique: true 
-  },
+  // REMOVED userId reference to SchoolUser
+  
   schoolId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "School",
     required: true
   },
   
+  // Login Credentials
+  studentId: { type: String, required: true, unique: true }, // e.g., NUR-001
+  password: { type: String, required: true }, // Hashed DOB
+  role: { type: String, default: 'student' },
+  
   // Academic Details
-  admissionNo: { type: String, required: true },
+  admissionNo: { type: String }, // Optional now, or you can use studentId as admissionNo
   class: { type: String, required: true },
   section: { type: String, required: true },
   admissionDate: { type: Date, required: true },
@@ -30,7 +31,7 @@ const studentSchema = new mongoose.Schema({
   fatherName: { type: String, required: true },
   motherName: { type: String, required: true },
   phone: { type: String, required: true },
-  email: { type: String, required: true },
+  email: { type: String }, // Made optional since they log in with studentId
 
   // Residential Address
   address: {

@@ -4,11 +4,13 @@ const router = express.Router();
 const { commonLogin } = require("../../controller/commonLogin/commonLogin");
 const { createTeacher } = require("../../controller/teacher/createTeacher");
 const { registerStudent } = require("../../controller/student/studentController");
+const { studentLogin } = require("../../controller/student/studentLoginController");
 const { verifyToken } = require("../../middleware/authMiddleware/authmiddleware");
 const upload = require("../../middleware/SuperAdmin/imageUpload");
 
 // Routes
 router.post("/login", commonLogin);          // Anyone logs in here
+router.post("/student-login", studentLogin); // Student login route
 
 router.post(
   "/create-teacher", 
