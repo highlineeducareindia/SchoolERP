@@ -36,7 +36,7 @@ export default function UnifiedLogin() {
     ? "url('https://images.unsplash.com/photo-1523050335392-93851179428c?q=80&w=2070')" 
     : "url('https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?q=80&w=1974')";
 
-  const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+  const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
   const toggleFlip = (targetMode) => {
     setIsFlipped(!isFlipped);
@@ -49,7 +49,7 @@ export default function UnifiedLogin() {
     const loadingToast = toast.loading("Authenticating...");
     try {
       // Common endpoint jo dono roles handle karega
-      const res = await axios.post(`${apiUrl}/api/common/login`, { email, password });
+      const res = await axios.post(`${apiUrl}/api/admin/login`, { email, password });
       
       const { role, id, firstLogin, token } = res.data;
       
@@ -57,15 +57,17 @@ export default function UnifiedLogin() {
       localStorage.setItem("token", token);
       localStorage.setItem("userRole", role);
 
-      toast.success(`${role.toUpperCase()} Login Successful!`, { id: loadingToast });
+      const userRoleLower = role.toLowerCase(); 
+
+      toast.success(`${userRoleLower.toUpperCase()} Login Successful!`, { id: loadingToast });
 
       if (firstLogin) {
         localStorage.setItem("userId", id);
-        navigate(role === "school" ? "/school/update-password" : "/teacher/update-password");
+        navigate(userRoleLower === "school_admin" ? "/admin/update-password" : "/update-password");
       } else {
         // Yahan redirection logic hai role ke according
-        if (role === "school" || role === "admin") {
-          navigate("/school/dashboard");
+        if (userRoleLower === "school_admin") {
+          navigate("/admin/dashboard");
         } else {
           navigate("/teacher/dashboard");
         }

@@ -23,7 +23,7 @@ export default function UpdatePassword({ userType = "school" }) { // 'superadmin
     const loadingToast = toast.loading("Updating security...");
     
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8080";
       await axios.post(`${apiUrl}/api/common/update-password`, {
         id: localStorage.getItem("userId"),
         newPassword: password

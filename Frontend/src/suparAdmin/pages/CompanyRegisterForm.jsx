@@ -36,6 +36,7 @@ const CompanyForm = () => {
     states: [],
     cities: [],
   });
+  const [plans, setPlans] = useState([]);
 
   // Load Countries
   useEffect(() => {
@@ -45,6 +46,24 @@ const CompanyForm = () => {
       name: c.name,
     }));
     setOptions((prev) => ({ ...prev, countries: countryData }));
+  }, []);
+
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8080";
+        const res = await axios.get(`${apiUrl}/api/superadmin/get-plans`);
+        if (res.data.success) {
+          setPlans(res.data.plans);
+          if (res.data.plans.length > 0) {
+            setFormData(prev => ({ ...prev, planId: res.data.plans[0]._id }));
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch plans", error);
+      }
+    };
+    fetchPlans();
   }, []);
 
   const handleCountryChange = (selected) => {
@@ -73,8 +92,13 @@ const CompanyForm = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (formData.planId === "Basic") {
+      alert("No subscription plan selected. Please ensure plans are loaded.");
+      return;
+    }
     try {
       const sendData = new FormData();
       Object.keys(formData).forEach((key) => {
@@ -89,11 +113,12 @@ const CompanyForm = () => {
         }
       });
 
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
-      await axios.post(`${apiUrl}/api/company/register`, sendData);
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8080";
+      await axios.post(`${apiUrl}/api/superadmin/register`, sendData);
       alert("Company Registered Successfully!");
     } catch (error) {
-      alert("Registration Failed");
+      console.error("Registration Error:", error);
+      alert(error.response?.data?.message || "Registration Failed");
     }
   };
 
@@ -283,14 +308,14 @@ const CompanyForm = () => {
               Select Subscription Plan
             </label>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {["Basic", "Pro", "Enterprise"].map((plan) => (
+              {plans.map((plan) => (
                 <button
-                  key={plan}
+                  key={plan._id}
                   type="button"
-                  onClick={() => setFormData({ ...formData, planId: plan })}
-                  className={`py-4 rounded-xl border-2 font-black text-xs transition-all ${formData.planId === plan ? "border-[#7C3AED] bg-purple-50 text-[#7C3AED] shadow-inner" : "border-gray-100 text-gray-400 bg-white"}`}
+                  onClick={() => setFormData({ ...formData, planId: plan._id })}
+                  className={`py-4 rounded-xl border-2 font-black text-xs transition-all ${formData.planId === plan._id ? "border-[#7C3AED] bg-purple-50 text-[#7C3AED] shadow-inner" : "border-gray-100 text-gray-400 bg-white"}`}
                 >
-                  {plan.toUpperCase()}
+                  {plan.name.toUpperCase()} - ₹{plan.MonthlyPrice}/mo
                 </button>
               ))}
             </div>

@@ -11,12 +11,12 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
   const menuItems = [
     {
       name: "Dashboard",
-      path: "/teacher/dashboard", // Updated path
+      path: "/teacher/teacher/dashboard", // Updated path
       icon: <FaTachometerAlt />,
     },
     { 
       name: "Settings", 
-      path: "/teacher/settings", // Updated path
+      path: "/teacher/teacher/settings", // Updated path
       icon: <FaCog /> 
     },
   ];

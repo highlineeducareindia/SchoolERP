@@ -11,9 +11,13 @@ const planSchema = new mongoose.Schema({
     AnnualPrice:{
         type:Number,
         required:true
-    }
- ,
-        // duration in days
+    },
+    studentLimit: {
+        type: Number,
+        required: false,
+        default: 0
+    },
+    // duration in days
         duration: {
             type: Number,
             required: true,

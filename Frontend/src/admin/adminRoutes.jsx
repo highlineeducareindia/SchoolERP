@@ -1,3 +1,4 @@
+import { Outlet } from "react-router-dom";
 import Login from "../common/login";
 import UpdatePassword from "../common/UpdatePassword";
 import Logout from "../common/Logout";
@@ -5,39 +6,52 @@ import AdminLayout from "./layout/AdminLayout";
 import Dashboard from "./pages/Dashboard";
 import StudentRegistration from "./pages/StudentRegister";
 import TeacherRegistration from "./pages/TeacherRegister";
+import AuthGuard from "../common/AuthGuard";
+
+const SchoolRoot = () => <Outlet />;
 
 export const adminRoutes = {
-  path: "/",
+  path: "/admin",
+  element: <Outlet />, // Changed to Outlet directly
   children: [
     {
       index: true,
       element: <Login type="school" />,
     },
     {
-      path: "update-password",
-      element: <UpdatePassword />,
+      path: "login",
+      element: <Login type="school" />,
     },
+    // Protected Routes
     {
-      path: "logout",
-      element: <Logout />,
-    },
-    {
-      path: "admin",
-      element: <AdminLayout />,
+      element: <AuthGuard allowedRoles={["school_admin"]} />,
       children: [
         {
-          path: "dashboard",
-          element: <Dashboard />,
+          path: "update-password",
+          element: <UpdatePassword userType="school" />, 
         },
         {
-          path: "students",
-          element: <StudentRegistration />,
+          path: "logout",
+          element: <Logout />,
         },
         {
-          path: "teachers",
-          element: <TeacherRegistration />,
-        }
-      ],
-    },
+          element: <AdminLayout />,
+          children: [
+            {
+              path: "dashboard",
+              element: <Dashboard />,
+            },
+            {
+              path: "students",
+              element: <StudentRegistration />,
+            },
+            {
+              path: "teachers",
+              element: <TeacherRegistration />,
+            }
+          ],
+        },
+      ]
+    }
   ],
 };

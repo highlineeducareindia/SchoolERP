@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { toast, Toaster } from "react-hot-toast";
+import apiClient from "../../api/api";
 import {
   FaSchool,
   FaUserShield,
@@ -10,6 +12,7 @@ import {
 import LiquidButton from "../../components/LiquidButton";
 
 const SchoolRegistration = () => {
+  const [plans, setPlans] = useState([]);
   const [formData, setFormData] = useState({
     schoolName: "",
     schoolCode: "",
@@ -29,11 +32,85 @@ const SchoolRegistration = () => {
     adminName: "",
     adminEmail: "",
     adminMobile: "",
-    plan: "Standard",
+    plan: "",
     modules: [],
     primaryColor: "#1E3A8A",
     secondaryColor: "#7C3AED",
   });
+
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        const res = await apiClient.get("/api/superadmin/get-plans");
+        if (res.data.success) {
+          setPlans(res.data.plans);
+          if (res.data.plans.length > 0) {
+            setFormData(prev => ({ ...prev, plan: res.data.plans[0]._id }));
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch plans", error);
+      }
+    };
+    fetchPlans();
+  }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const companyId = localStorage.getItem("companyId");
+      if (!companyId) {
+        toast.error("Company ID not found. Please login again.");
+        return;
+      }
+
+      const formDataToSend = new FormData();
+      formDataToSend.append("companyId", companyId);
+      formDataToSend.append("schoolname", formData.schoolName);
+      formDataToSend.append("email", formData.adminEmail);
+      formDataToSend.append("phone", formData.phone);
+      formDataToSend.append("address", JSON.stringify({
+        street: formData.address,
+        city: formData.city,
+        state: formData.state,
+        country: formData.country,
+        pincode: formData.pincode
+      }));
+      formDataToSend.append("max_class", formData.classes.length > 0 ? 12 : 12);
+      formDataToSend.append("session_type", formData.sessionType === "Apr-March" ? "Annual" : "Semester");
+      formDataToSend.append("session", formData.sessionYear);
+      formDataToSend.append("plan_id", formData.plan);
+      
+      formDataToSend.append("udise_code", formData.schoolCode);
+      formDataToSend.append("alternate_phone", formData.altPhone);
+      formDataToSend.append("website", formData.website);
+      formDataToSend.append("classes", JSON.stringify(formData.classes));
+      formDataToSend.append("boards", JSON.stringify(formData.boards));
+      formDataToSend.append("admin_name", formData.adminName);
+      formDataToSend.append("admin_mobile", formData.adminMobile);
+      formDataToSend.append("modules", JSON.stringify(formData.modules));
+      formDataToSend.append("primary_color", formData.primaryColor);
+      formDataToSend.append("secondary_color", formData.secondaryColor);
+      
+      if (formData.logo) {
+        formDataToSend.append("logo", formData.logo);
+      }
+
+      const res = await apiClient.post("/api/superadmin/create-school", formDataToSend, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      
+      if (res.data.success) {
+        toast.success(res.data.message || "School created successfully!");
+      } else {
+        toast.error(res.data.message || "Failed to create school");
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to create school");
+    }
+  };
 
   const classesList = [
     "Nursery",
@@ -81,6 +158,7 @@ const SchoolRegistration = () => {
   };
   return (
     <div className="max-w-6xl mx-auto p-4 md:p-8 space-y-10 bg-[#F5F7FB]">
+      <Toaster position="top-center" />
       {/* Header */}
       <div className="border-b border-gray-200 pb-4">
         <h1 className="text-2xl font-bold text-[#1E293B] uppercase tracking-tight">
@@ -91,7 +169,7 @@ const SchoolRegistration = () => {
         </p>
       </div>
 
-      <form className="space-y-8">
+      <form className="space-y-8" onSubmit={handleSubmit}>
         {/* 1. Basic Details */}
         <section className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
           <h2 className="flex items-center gap-2 text-[#7C3AED] font-bold mb-6 italic">
@@ -231,7 +309,7 @@ const SchoolRegistration = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <section className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
             <h2 className="flex items-center gap-2 text-[#7C3AED] font-bold mb-6 italic">
-              <FaUserShield /> School Admin
+              <FaUserShield /> School Admin & Plan
             </h2>
             <div className="space-y-4">
               <InputField
@@ -250,6 +328,20 @@ const SchoolRegistration = () => {
                 type="tel"
                 onChange={(v) => setFormData({ ...formData, adminMobile: v })}
               />
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">
+                  Select Plan
+                </label>
+                <select
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-[#7C3AED] focus:bg-white transition font-bold text-gray-700 text-sm shadow-sm"
+                  value={formData.plan}
+                  onChange={(e) => setFormData({ ...formData, plan: e.target.value })}
+                >
+                  {plans.map(p => (
+                    <option key={p._id} value={p._id}>{p.name} - ₹{p.MonthlyPrice}/mo</option>
+                  ))}
+                </select>
+              </div>
             </div>
           </section>
 

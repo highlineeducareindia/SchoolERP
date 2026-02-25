@@ -14,7 +14,7 @@ export default function Logout() {
 
     // 3. Condition based redirection
     if (userRole === "school") {
-      navigate("/school/login", { replace: true });
+      navigate("/admin/login", { replace: true });
     } else if (userRole === "teacher") {
       navigate("/teacher/login", { replace: true });
     } else {

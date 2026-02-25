@@ -27,14 +27,14 @@ export default function UpdatePassword() {
 
     const loadingToast = toast.loading("Updating security settings...");
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
-      await axios.post(`${apiUrl}/api/company/update-password`, {
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8080";
+      await axios.post(`${apiUrl}/api/superadmin/update-password`, {
         companyId,
         newPassword: password
       });
 
       toast.success("Password Updated! Redirecting...", { id: loadingToast });
-      setTimeout(() => navigate("/"), 2000); // Thoda delay login pe jane se pehle
+      setTimeout(() => navigate("/super-admin"), 2000); // Thoda delay login pe jane se pehle
     } catch (err) {
       toast.error(err.response?.data?.message || "Update failed", { id: loadingToast });
     }

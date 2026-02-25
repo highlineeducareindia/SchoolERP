@@ -45,7 +45,7 @@ useEffect(() => {
 
   const logout = () => {
     localStorage.clear();
-    navigate("/super-admin");
+    navigate("/admin/login");
   };
 
   return (

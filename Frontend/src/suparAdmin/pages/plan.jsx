@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { toast, Toaster } from "react-hot-toast";
+import apiClient from "../../api/api";
 import {
   FaRupeeSign,
   FaUsers,
@@ -36,11 +38,42 @@ const SimplePlanCreator = () => {
     }
   }, [rate, billingCycle, manualDiscount]);
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const loadingToast = toast.loading("Creating plan...");
+    try {
+      const payload = {
+        name: planName,
+        MonthlyPrice: parseFloat(rate) || 0,
+        AnnualPrice: billingCycle === "Yearly" ? total : (parseFloat(rate) || 0) * 12,
+        duration: billingCycle === "Yearly" ? 365 : 30,
+        studentLimit: parseInt(limit) || 0
+      };
+
+      const res = await apiClient.post("/api/superadmin/create-plan", payload);
+      if (res.data.success) {
+        toast.success("Plan created successfully!", { id: loadingToast });
+        // Reset form
+        setPlanName("");
+        setRate("");
+        setLimit("");
+        setBillingCycle("Yearly");
+        setManualDiscount(5);
+      } else {
+        toast.error(res.data.message || "Failed to create plan", { id: loadingToast });
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to create plan", { id: loadingToast });
+    }
+  };
+
   // Teeno fields fill hone par hi preview dikhega
-  const isReady = planName.trim() !== "" && rate !== "" && limit !== "";
+  const isReady = true;
 
   return (
     <div className="w-full bg-[#F8FAFC] min-h-[calc(100vh-64px)]  sm:p-8 font-sans">
+      <Toaster position="top-center" />
       <div className="max-w-6xl mx-auto">
         <div className="mb-4 pb-3 border-b border-gray-200 ">
           <h2 className="text-2xl font-bold uppercase text-slate-800 tracking-tight">
@@ -201,7 +234,9 @@ const SimplePlanCreator = () => {
                   )}
                 </div>
 
-                <LiquidButton label="Confirm & Create Plan" role="superadmin" type="submit"/>
+                <div onClick={handleSubmit}>
+                  <LiquidButton label="Confirm & Create Plan" role="superadmin" type="button"/>
+                </div>
               </div>
             ) : (
               /* EMPTY STATE */

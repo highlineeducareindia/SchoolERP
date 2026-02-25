@@ -1,9 +1,9 @@
   const plan = require("../../models/plan/planModel");
   
-  const createPlan = async (req, res) => {
+const createPlan = async (req, res) => {
   try {
-    const { name, MonthlyPrice, AnnualPrice, duration } = req.body;
-    const newPlan = new plan({ name, MonthlyPrice, AnnualPrice, duration });
+    const { name, MonthlyPrice, AnnualPrice, duration, studentLimit } = req.body;
+    const newPlan = new plan({ name, MonthlyPrice, AnnualPrice, duration, studentLimit });
     await newPlan.save();
     res.json({ success: true, message: "Plan created successfully", plan: newPlan });
   } catch (error) {
@@ -14,10 +14,10 @@
 
 const editPlan = async (req, res) => {
     try {
-        const { planId, name, MonthlyPrice, AnnualPrice } = req.body;
+        const { planId, name, MonthlyPrice, AnnualPrice, studentLimit } = req.body;
         const updatedPlan = await plan.findByIdAndUpdate(
             planId,
-            { name, MonthlyPrice, AnnualPrice },
+            { name, MonthlyPrice, AnnualPrice, studentLimit },
             { new: true }
         );
         if (!updatedPlan) { 

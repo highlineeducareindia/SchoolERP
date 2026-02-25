@@ -1,7 +1,7 @@
 import React from "react";
 import { FaArrowRight } from "react-icons/fa";
 
-const LiquidButton = ({ label = "Create Plan", onClick, type = "submit", role = "superadmin" }) => {
+const LiquidButton = ({ label = "Create Plan", onClick, type = "submit", role = "superadmin", disabled = false }) => {
   
   // Role-based Color Mapping
   const theme = {
@@ -20,16 +20,21 @@ const LiquidButton = ({ label = "Create Plan", onClick, type = "submit", role = 
     <button
       type={type}
       onClick={onClick}
-      style={{ backgroundColor: currentTheme.color, borderColor: currentTheme.color }}
-      className={`group relative px-8 py-3 w-auto font-bold text-sm uppercase tracking-widest overflow-hidden rounded-xl text-white transition-all duration-500 shadow-lg border-2 ${currentTheme.border}`}
+      disabled={disabled}
+      style={{ 
+        backgroundColor: disabled ? "#9CA3AF" : currentTheme.color, 
+        borderColor: disabled ? "#9CA3AF" : currentTheme.color,
+        cursor: disabled ? 'not-allowed' : 'pointer'
+      }}
+      className={`group relative px-8 py-3 w-auto font-bold text-sm uppercase tracking-widest overflow-hidden rounded-xl text-white transition-all duration-500 shadow-lg border-2 ${disabled ? 'border-gray-400' : currentTheme.border}`}
     >
-      {/* Liquid Hover Effect */}
-      <span className="absolute inset-0 w-0 bg-white transition-all duration-500 ease-out group-hover:w-full"></span>
+      {/* Liquid Hover Effect - only when not disabled */}
+      {!disabled && <span className="absolute inset-0 w-0 bg-white transition-all duration-500 ease-out group-hover:w-full"></span>}
 
       {/* Content */}
-      <span className={`relative flex items-center justify-center gap-3 transition-colors duration-500 ${currentTheme.textHover}`}>
+      <span className={`relative flex items-center justify-center gap-3 transition-colors duration-500 ${!disabled ? currentTheme.textHover : ''}`}>
         {label}
-        <FaArrowRight className="text-xs transition-transform duration-500 group-hover:translate-x-2" />
+        {!disabled && <FaArrowRight className="text-xs transition-transform duration-500 group-hover:translate-x-2" />}
       </span>
     </button>
   );

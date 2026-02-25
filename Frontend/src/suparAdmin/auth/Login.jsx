@@ -17,7 +17,7 @@ export default function AdminLogin() {
   const [showNewPass, setShowNewPass] = useState(false);
   const navigate = useNavigate();
 
-  const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+  const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
   const toggleFlip = (newMode) => {
     setIsFlipped(!isFlipped);
@@ -28,13 +28,14 @@ export default function AdminLogin() {
   const handleLogin = async () => {
     const loadingToast = toast.loading("Verifying credentials...");
     try {
-      const res = await axios.post(`${apiUrl}/api/company/login`, { email, password });
+      const res = await axios.post(`${apiUrl}/api/superadmin/login`, { email, password });
       toast.success("Login Successful!", { id: loadingToast });
       if (res.data.firstLogin) {
         localStorage.setItem("companyId", res.data.companyId);
-        navigate("/update-password");
+        navigate("/super-admin/update-password");
       } else {
-        navigate("/dashboard");
+        localStorage.setItem("companyId", res.data.companyId);
+        navigate("/super-admin/dashboard");
       }
     } catch (err) {
       toast.error(err.response?.data?.message || "Login failed", { id: loadingToast });
@@ -45,7 +46,7 @@ export default function AdminLogin() {
     if (!email) return toast.error("Please enter email address");
     const loadingToast = toast.loading("Sending OTP...");
     try {
-      const res = await axios.post(`${apiUrl}/api/company/forgot-password`, { email });
+      const res = await axios.post(`${apiUrl}/api/superadmin/forgot-password`, { email });
       toast.success(res.data.message || "OTP sent to email", { id: loadingToast });
       setMode("reset");
     } catch (err) {
@@ -57,7 +58,7 @@ export default function AdminLogin() {
     if (newPass !== confirm) return toast.error("Passwords do not match");
     const loadingToast = toast.loading("Updating password...");
     try {
-      const res = await axios.post(`${apiUrl}/api/company/reset-password`, {
+      const res = await axios.post(`${apiUrl}/api/superadmin/reset-password`, {
         email: email.trim(), otp: otp.trim(), password: newPass
       });
       toast.success(res.data.message || "Password updated!", { id: loadingToast });

@@ -12,12 +12,100 @@ import {
 import LiquidButton from "../../components/LiquidButton";
 
 const StudentRegistration = () => {
+  const [formData, setFormData] = React.useState({});
+  const [loading, setLoading] = React.useState(false);
+
   const location = useLocation();
+  const token = localStorage.getItem("token");
   
   // Theme Detection (Keeping your logic)
   const isSchool = !location.pathname.includes("teacher");
   const themeAccent = isSchool ? "#3B82F6" : "#10B981"; // Blue or Emerald
   const themeBgLight = isSchool ? "bg-blue-50" : "bg-emerald-50";
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    if (name.includes(".")) {
+      const [parent, child] = name.split(".");
+      setFormData((prev) => ({
+        ...prev,
+        [parent]: { ...prev[parent], [child]: value }
+      }));
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
+  };
+
+  const handleTransportChange = (val) => {
+    setFormData({ ...formData, transportRequired: val });
+  };
+
+  const handleFileChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.files[0] });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    // Validation
+    const requiredFields = [
+      "admissionNo", "class", "section", "admissionDate", 
+      "fullName", "dob", "gender", 
+      "fatherName", "motherName", "phone", "email"
+    ];
+
+    const missingFields = requiredFields.filter(field => !formData[field]);
+
+    // Check nested address field specifically
+    if (!formData.address?.fullAddress) {
+      missingFields.push("Full Address");
+    }
+
+    if (missingFields.length > 0) {
+      alert(`Please fill the following required fields:\n- ${missingFields.join("\n- ")}`);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8080";
+      
+      const data = new FormData();
+      Object.keys(formData).forEach(key => {
+        if (key === 'address') {
+          data.append('address', JSON.stringify(formData[key]));
+        } else {
+          data.append(key, formData[key]);
+        }
+      });
+
+      const response = await fetch(`${apiUrl}/api/admin/register-student`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        },
+        body: data
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert("Student Registered Successfully!");
+      } else {
+        if (result.errors) {
+          alert(result.message + ":\n" + result.errors.join("\n"));
+        } else {
+          alert(result.message || "Registration Failed");
+        }
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert("Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const inputBase = `w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-[${themeAccent}] focus:bg-white transition font-bold text-gray-700 text-sm shadow-sm`;
   const labelBase = "text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block";
@@ -41,7 +129,7 @@ const StudentRegistration = () => {
         </div>
       </div>
 
-      <form className="max-w-6xl mx-auto space-y-8">
+      <form className="max-w-6xl mx-auto space-y-8" onSubmit={handleSubmit}>
         
         {/* 2. Academic Section */}
         <section className={sectionCard}>
@@ -51,25 +139,52 @@ const StudentRegistration = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="md:col-span-1">
               <label className={labelBase}>Admission No.</label>
-              <input type="text" className={inputBase} placeholder="ADM-2026-001" />
+              <input 
+                type="text" 
+                name="admissionNo" 
+                className={inputBase} 
+                placeholder="ADM-2026-001" 
+                onChange={handleChange}
+                required
+              />
             </div>
             <div>
               <label className={labelBase}>Class</label>
-              <select className={inputBase}>
-                <option>Select Class</option>
-                <option>Grade 10</option>
+              <select name="class" className={inputBase} onChange={handleChange} required>
+                <option value="">Select Class</option>
+                <option value="Grade 1">Grade 1</option>
+                <option value="Grade 2">Grade 2</option>
+                <option value="Grade 3">Grade 3</option>
+                <option value="Grade 4">Grade 4</option>
+                <option value="Grade 5">Grade 5</option>
+                <option value="Grade 6">Grade 6</option>
+                <option value="Grade 7">Grade 7</option>
+                <option value="Grade 8">Grade 8</option>
+                <option value="Grade 9">Grade 9</option>
+                <option value="Grade 10">Grade 10</option>
+                <option value="Grade 11">Grade 11</option>
+                <option value="Grade 12">Grade 12</option>
               </select>
             </div>
             <div>
               <label className={labelBase}>Section</label>
-              <select className={inputBase}>
-                <option>Select Section</option>
-                <option>A</option>
+              <select name="section" className={inputBase} onChange={handleChange} required>
+                <option value="">Select Section</option>
+                <option value="A">A</option>
+                <option value="B">B</option>
+                <option value="C">C</option>
+                <option value="D">D</option>
               </select>
             </div>
             <div>
               <label className={labelBase}>Admission Date</label>
-              <input type="date" className={inputBase} />
+              <input 
+                type="date" 
+                name="admissionDate" 
+                className={inputBase} 
+                onChange={handleChange}
+                required
+              />
             </div>
           </div>
         </section>
@@ -82,17 +197,35 @@ const StudentRegistration = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-2">
               <label className={labelBase}>Student Full Name</label>
-              <input type="text" className={inputBase} placeholder="e.g. Rahul Sharma" />
+              <input 
+                type="text" 
+                name="fullName" 
+                className={inputBase} 
+                placeholder="e.g. Rahul Sharma" 
+                onChange={handleChange}
+                required
+              />
             </div>
             <div>
               <label className={labelBase}>Date of Birth</label>
-              <input type="date" className={inputBase} />
+              <input 
+                type="date" 
+                name="dob" 
+                className={inputBase} 
+                onChange={handleChange}
+                required
+              />
             </div>
             <div>
               <label className={labelBase}>Gender</label>
               <div className="flex gap-3">
                 {["Male", "Female", "Other"].map((g) => (
-                  <button key={g} type="button" className="flex-1 py-3 rounded-xl border border-gray-100 bg-gray-50 text-xs font-bold text-gray-500 hover:bg-white hover:border-purple-300 transition">
+                  <button 
+                    key={g} 
+                    type="button" 
+                    className={`flex-1 py-3 rounded-xl border font-bold text-xs transition ${formData.gender === g ? 'bg-purple-100 border-purple-300 text-purple-700' : 'bg-gray-50 border-gray-100 text-gray-500 hover:bg-white'}`}
+                    onClick={() => setFormData({ ...formData, gender: g })}
+                  >
                     {g}
                   </button>
                 ))}
@@ -100,11 +233,23 @@ const StudentRegistration = () => {
             </div>
             <div>
               <label className={labelBase}>Blood Group</label>
-              <input type="text" className={inputBase} placeholder="O+ve" />
+              <input 
+                type="text" 
+                name="bloodGroup" 
+                className={inputBase} 
+                placeholder="O+ve" 
+                onChange={handleChange}
+              />
             </div>
             <div>
               <label className={labelBase}>Aadhar Number</label>
-              <input type="text" className={inputBase} placeholder="0000 0000 0000" />
+              <input 
+                type="text" 
+                name="aadhar" 
+                className={inputBase} 
+                placeholder="0000 0000 0000" 
+                onChange={handleChange}
+              />
             </div>
           </div>
         </section>
@@ -118,20 +263,45 @@ const StudentRegistration = () => {
             <div className="space-y-4">
               <div>
                 <label className={labelBase}>Father's Name</label>
-                <input type="text" className={inputBase} />
+                <input 
+                  type="text" 
+                  name="fatherName" 
+                  className={inputBase} 
+                  onChange={handleChange}
+                  required
+                />
               </div>
               <div>
                 <label className={labelBase}>Mother's Name</label>
-                <input type="text" className={inputBase} />
+                <input 
+                  type="text" 
+                  name="motherName" 
+                  className={inputBase} 
+                  onChange={handleChange}
+                  required
+                />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className={labelBase}>Phone Number</label>
-                  <input type="tel" className={inputBase} placeholder="+91" />
+                  <input 
+                    type="tel" 
+                    name="phone" 
+                    className={inputBase} 
+                    placeholder="+91" 
+                    onChange={handleChange}
+                    required
+                  />
                 </div>
                 <div>
                   <label className={labelBase}>Email Address</label>
-                  <input type="email" className={inputBase} />
+                  <input 
+                    type="email" 
+                    name="email" 
+                    className={inputBase} 
+                    onChange={handleChange}
+                    required
+                  />
                 </div>
               </div>
             </div>
@@ -144,21 +314,42 @@ const StudentRegistration = () => {
             <div className="space-y-4">
               <div>
                 <label className={labelBase}>Full Address</label>
-                <textarea rows="1" className={`${inputBase} resize-none`} placeholder="House No, Street..."></textarea>
+                <textarea 
+                  name="address.fullAddress" 
+                  rows="1" 
+                  className={`${inputBase} resize-none`} 
+                  placeholder="House No, Street..." 
+                  onChange={handleChange}
+                ></textarea>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className={labelBase}>City</label>
-                  <input type="text" className={inputBase} />
+                  <input 
+                    type="text" 
+                    name="address.city" 
+                    className={inputBase} 
+                    onChange={handleChange}
+                  />
                 </div>
                 <div>
                   <label className={labelBase}>Pincode</label>
-                  <input type="text" className={inputBase} />
+                  <input 
+                    type="text" 
+                    name="address.pincode" 
+                    className={inputBase} 
+                    onChange={handleChange}
+                  />
                 </div>
               </div>
               <div>
                 <label className={labelBase}>State</label>
-                <input type="text" className={inputBase} />
+                <input 
+                  type="text" 
+                  name="address.state" 
+                  className={inputBase} 
+                  onChange={handleChange}
+                />
               </div>
             </div>
           </section>
@@ -173,11 +364,23 @@ const StudentRegistration = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="p-4 border-2 border-dashed border-gray-100 rounded-2xl text-center bg-gray-50 hover:bg-white transition cursor-pointer group">
                 <p className={labelBase}>Student Photo</p>
-                <input type="file" className="text-[10px] w-full" />
+                <input 
+                  type="file" 
+                  name="studentPhoto"
+                  className="text-[10px] w-full" 
+                  accept="image/*"
+                  onChange={handleFileChange}
+                />
               </div>
               <div className="p-4 border-2 border-dashed border-gray-100 rounded-2xl text-center bg-gray-50 hover:bg-white transition cursor-pointer group">
                 <p className={labelBase}>Birth Certificate</p>
-                <input type="file" className="text-[10px] w-full" />
+                <input 
+                  type="file" 
+                  name="birthCertificate"
+                  className="text-[10px] w-full" 
+                  accept=".pdf,image/*"
+                  onChange={handleFileChange}
+                />
               </div>
             </div>
           </section>
@@ -189,7 +392,12 @@ const StudentRegistration = () => {
             <label className={labelBase}>Require Bus Facility?</label>
             <div className="flex gap-3">
                 {["No", "Yes"].map((opt) => (
-                  <button key={opt} type="button" className={`flex-1 py-3 rounded-xl border font-bold text-xs transition ${opt === 'No' ? 'bg-gray-50 text-gray-400 border-gray-100' : 'border-blue-100 bg-blue-50 text-blue-600'}`}>
+                  <button 
+                    key={opt} 
+                    type="button" 
+                    onClick={() => handleTransportChange(opt === "Yes")}
+                    className={`flex-1 py-3 rounded-xl border font-bold text-xs transition ${formData.transportRequired === (opt === "Yes") ? 'border-blue-100 bg-blue-50 text-blue-600' : 'bg-gray-50 text-gray-400 border-gray-100'}`}
+                  >
                     {opt}
                   </button>
                 ))}
@@ -201,11 +409,11 @@ const StudentRegistration = () => {
         {/* 6. Submit Button (Matching School Registration Style) */}
         <div className="max-w-xs mx-auto pt-10">
            <LiquidButton
-            type="submit" 
+             type="submit" 
              role="admin"
-           >
-             Register Student
-           </LiquidButton>
+             label={loading ? "Registering..." : "Register Student"}
+             disabled={loading}
+           />
         </div>
 
       </form>
