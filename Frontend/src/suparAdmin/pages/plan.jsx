@@ -101,19 +101,21 @@ const SimplePlanCreator = () => {
     // Smooth scroll to top form
     topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
+const handleDelete = async (id) => {
+  if (!window.confirm("Delete this plan permanently?")) return;
 
-  const handleDelete = async (id) => {
-    if(!window.confirm("Delete this plan permanently?")) return;
-    try {
-      const res = await apiClient.post("/api/superadmin/delete-plan", { id });
-      if(res.data.success) {
-        toast.success("Plan Deleted");
-        fetchPlans();
-      }
-    } catch (err) {
-      toast.error("Delete failed");
+  try {
+    const res = await apiClient.post("/api/superadmin/delete-plan", { planId: id });
+
+    if (res.data.success) {
+      toast.success("Plan Deleted");
+      fetchPlans();
     }
-  };
+  } catch (err) {
+    console.log(err.response?.data);
+    toast.error("Delete failed");
+  }
+};
 
   const resetForm = () => {
     setEditingId(null);

@@ -29,19 +29,23 @@ const ViewPlans = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Permanently delete this plan?")) return;
-    const deleteToast = toast.loading("Processing...");
-    try {
-      const res = await apiClient.post(`/api/superadmin/delete-plan`, { id });
-      if (res.data.success) {
-        setPlans(plans.filter(p => p._id !== id));
-        toast.success("Plan purged", { id: deleteToast });
-      }
-    } catch (err) {
-      toast.error("Error", { id: deleteToast });
+const handleDelete = async (id) => {
+  if (!window.confirm("Permanently delete this plan?")) return;
+
+  const deleteToast = toast.loading("Processing...");
+
+  try {
+    const res = await apiClient.post("/api/superadmin/delete-plan", { planId: id });
+
+    if (res.data.success) {
+      setPlans(plans.filter(p => p._id !== id));
+      toast.success("Plan purged", { id: deleteToast });
     }
-  };
+  } catch (err) {
+    console.log(err.response?.data); // debugging
+    toast.error("Error", { id: deleteToast });
+  }
+};
 
   return (
     <div className="w-full bg-[#F8FAFC] min-h-screen p-4 sm:p-8">

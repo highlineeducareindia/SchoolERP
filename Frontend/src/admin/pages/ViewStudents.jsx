@@ -3,6 +3,7 @@ import {
   Search, 
   Eye, 
   User, 
+  Users,
   MapPin, 
   Phone, 
   Mail, 
@@ -10,7 +11,8 @@ import {
   X,
   ChevronLeft,
   FileText,
-  Download
+  Download,
+  GraduationCap
 } from "lucide-react";
 import apiClient from "../../api/api";
 
@@ -23,7 +25,6 @@ const ViewStudent = () => {
 
   const token = localStorage.getItem("token");
 
-  // Fetch Students from API
   useEffect(() => {
     fetchStudents();
   }, []);
@@ -34,7 +35,9 @@ const ViewStudent = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.data.success) {
-        setStudents(res.data.data);
+        // Handle different API response shapes
+        const list = res.data.data || res.data.students || res.data.result || [];
+        setStudents(Array.isArray(list) ? list : []);
       }
     } catch (err) {
       console.error("Error fetching students:", err);
@@ -44,8 +47,8 @@ const ViewStudent = () => {
   };
 
   const filteredStudents = students.filter(stu => 
-    stu.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    stu.studentId?.toLowerCase().includes(searchTerm.toLowerCase())
+    (stu.fullName || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (stu.studentId || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const openDetails = (student) => {
@@ -62,7 +65,7 @@ const ViewStudent = () => {
           <h1 className="text-2xl font-bold text-slate-800 uppercase tracking-tight flex items-center gap-3">
             Registered Students
           </h1>
-          <p className="text-slate-500 text-sm  font-medium">Total Enrolled: {students.length}</p>
+          <p className="text-slate-500 text-sm font-medium">Total Enrolled: {students.length}</p>
         </div>
 
         {/* Search Bar */}
@@ -92,14 +95,21 @@ const ViewStudent = () => {
             </thead>
             <tbody className="divide-y divide-slate-50">
               {loading ? (
-                <tr><td colSpan="5" className="text-center py-20 text-slate-400 font-bold animate-pulse">Loading Database...</td></tr>
+                <tr>
+                  <td colSpan="5" className="text-center py-20 text-slate-400 font-bold animate-pulse">
+                    Loading Database...
+                  </td>
+                </tr>
               ) : filteredStudents.length > 0 ? (
                 filteredStudents.map((stu) => (
                   <tr key={stu._id} className="hover:bg-blue-50/30 transition-colors group">
                     <td className="px-8 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold uppercase overflow-hidden border border-blue-200">
-                          {stu.studentPhoto ? <img src={stu.studentPhoto} alt="stu" className="w-full h-full object-cover" /> : <User size={18} />}
+                          {stu.studentPhoto 
+                            ? <img src={stu.studentPhoto} alt="stu" className="w-full h-full object-cover" /> 
+                            : <User size={18} />
+                          }
                         </div>
                         <div>
                           <p className="font-bold text-slate-800 leading-tight">{stu.fullName}</p>
@@ -128,7 +138,11 @@ const ViewStudent = () => {
                   </tr>
                 ))
               ) : (
-                <tr><td colSpan="5" className="text-center py-20 text-slate-400 font-bold">No students found.</td></tr>
+                <tr>
+                  <td colSpan="5" className="text-center py-20 text-slate-400 font-bold">
+                    No students found.
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>
@@ -138,18 +152,25 @@ const ViewStudent = () => {
       {/* DETAILED VIEW MODAL */}
       {isModalOpen && selectedStudent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
-          <div className="bg-white w-full max-w-4xl max-h-[90vh] rounded-[32px] shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-300">
+          <div className="bg-white w-full max-w-4xl max-h-[90vh] rounded-[32px] shadow-2xl overflow-hidden flex flex-col">
             
             {/* Modal Header */}
-            <div className="p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+            <div className="p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center shrink-0">
               <div className="flex items-center gap-4">
-                 <div className="w-14 h-14 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-200">
-                    <User size={28} />
-                 </div>
-                 <div>
-                    <h3 className="text-xl font-black text-slate-800 uppercase leading-none">{selectedStudent.fullName}</h3>
-                    <p className="text-sm text-slate-500 font-bold mt-1">Enrollment ID: {selectedStudent.studentId}</p>
-                 </div>
+                <div className="w-14 h-14 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-200 overflow-hidden">
+                  {selectedStudent.studentPhoto 
+                    ? <img src={selectedStudent.studentPhoto} alt="photo" className="w-full h-full object-cover" />
+                    : <User size={28} />
+                  }
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-slate-800 uppercase leading-none">
+                    {selectedStudent.fullName}
+                  </h3>
+                  <p className="text-sm text-slate-500 font-bold mt-1">
+                    Enrollment ID: {selectedStudent.studentId}
+                  </p>
+                </div>
               </div>
               <button 
                 onClick={() => setIsModalOpen(false)}
@@ -163,67 +184,109 @@ const ViewStudent = () => {
             <div className="flex-1 overflow-y-auto p-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                 
-                {/* Information Column */}
+                {/* Left Column — Info */}
                 <div className="space-y-8">
+
+                  {/* Academic Profile */}
                   <div>
-                    <h4 className="text-[10px] font-black uppercase tracking-[2px] text-blue-500 mb-4 italic">Academic Profile</h4>
+                    <h4 className="text-[10px] font-black uppercase tracking-[2px] text-blue-500 mb-4 italic">
+                      Academic Profile
+                    </h4>
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-slate-50 p-3 rounded-2xl">
-                            <span className="block text-[10px] text-slate-400 font-bold uppercase">Class</span>
-                            <span className="font-black text-slate-700 uppercase">{selectedStudent.class}</span>
-                        </div>
-                        <div className="bg-slate-50 p-3 rounded-2xl">
-                            <span className="block text-[10px] text-slate-400 font-bold uppercase">Section</span>
-                            <span className="font-black text-slate-700 uppercase">{selectedStudent.section}</span>
-                        </div>
+                      <div className="bg-slate-50 p-3 rounded-2xl">
+                        <span className="block text-[10px] text-slate-400 font-bold uppercase">Class</span>
+                        <span className="font-black text-slate-700 uppercase">{selectedStudent.class || "—"}</span>
+                      </div>
+                      <div className="bg-slate-50 p-3 rounded-2xl">
+                        <span className="block text-[10px] text-slate-400 font-bold uppercase">Section</span>
+                        <span className="font-black text-slate-700 uppercase">{selectedStudent.section || "—"}</span>
+                      </div>
+                      <div className="bg-slate-50 p-3 rounded-2xl">
+                        <span className="block text-[10px] text-slate-400 font-bold uppercase">Admission No</span>
+                        <span className="font-black text-slate-700">{selectedStudent.admissionNo || "—"}</span>
+                      </div>
+                      <div className="bg-slate-50 p-3 rounded-2xl">
+                        <span className="block text-[10px] text-slate-400 font-bold uppercase">Roll No</span>
+                        <span className="font-black text-slate-700">{selectedStudent.rollNo || "—"}</span>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="space-y-4">
-                    <h4 className="text-[10px] font-black uppercase tracking-[2px] text-blue-500 italic">Personal Details</h4>
-                    <div className="flex items-center gap-4 text-slate-600 font-bold">
-                        <Calendar size={18} className="text-slate-300" /> DOB: {new Date(selectedStudent.dob).toLocaleDateString()}
+                  {/* Personal Details */}
+                  <div className="space-y-3">
+                    <h4 className="text-[10px] font-black uppercase tracking-[2px] text-blue-500 italic">
+                      Personal Details
+                    </h4>
+                    <div className="flex items-center gap-4 text-slate-600 font-bold text-sm">
+                      <Calendar size={18} className="text-slate-300 shrink-0" />
+                      DOB: {selectedStudent.dob ? new Date(selectedStudent.dob).toLocaleDateString("en-IN") : "—"}
                     </div>
-                    <div className="flex items-center gap-4 text-slate-600 font-bold">
-                        <Users size={18} className="text-slate-300" /> Parent: {selectedStudent.fatherName}
+                    <div className="flex items-center gap-4 text-slate-600 font-bold text-sm">
+                      <User size={18} className="text-slate-300 shrink-0" />
+                      Gender: {selectedStudent.gender || "—"}
                     </div>
-                    <div className="flex items-center gap-4 text-slate-600 font-bold">
-                        <Phone size={18} className="text-slate-300" /> {selectedStudent.phone}
+                    <div className="flex items-center gap-4 text-slate-600 font-bold text-sm">
+                      <Users size={18} className="text-slate-300 shrink-0" />
+                      Father: {selectedStudent.fatherName || "—"}
                     </div>
-                    <div className="flex items-center gap-4 text-slate-600 font-bold">
-                        <Mail size={18} className="text-slate-300" /> {selectedStudent.email}
+                    <div className="flex items-center gap-4 text-slate-600 font-bold text-sm">
+                      <Users size={18} className="text-slate-300 shrink-0" />
+                      Mother: {selectedStudent.motherName || "—"}
                     </div>
-                    <div className="flex items-start gap-4 text-slate-600 font-bold">
-                        <MapPin size={18} className="text-slate-300 mt-1" /> 
-                        <span>{selectedStudent.address?.fullAddress}, {selectedStudent.address?.city}</span>
+                    <div className="flex items-center gap-4 text-slate-600 font-bold text-sm">
+                      <Phone size={18} className="text-slate-300 shrink-0" />
+                      {selectedStudent.phone || "—"}
+                    </div>
+                    <div className="flex items-center gap-4 text-slate-600 font-bold text-sm">
+                      <Mail size={18} className="text-slate-300 shrink-0" />
+                      {selectedStudent.email || "—"}
+                    </div>
+                    <div className="flex items-start gap-4 text-slate-600 font-bold text-sm">
+                      <MapPin size={18} className="text-slate-300 mt-0.5 shrink-0" />
+                      <span>
+                        {[
+                          selectedStudent.address?.fullAddress,
+                          selectedStudent.address?.city,
+                          selectedStudent.address?.state,
+                          selectedStudent.address?.pincode,
+                        ].filter(Boolean).join(", ") || "—"}
+                      </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Documents Column */}
+                {/* Right Column — Documents + ID Card */}
                 <div className="space-y-6">
-                  <h4 className="text-[10px] font-black uppercase tracking-[2px] text-blue-500 italic">Uploaded Documents</h4>
+                  <h4 className="text-[10px] font-black uppercase tracking-[2px] text-blue-500 italic">
+                    Uploaded Documents
+                  </h4>
                   
                   <div className="space-y-3">
-                    {['studentPhoto', 'birthCertificate'].map((doc) => (
-                      <div key={doc} className="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-2xl hover:border-blue-400 transition-colors group">
+                    {[
+                      { key: "studentPhoto",      label: "Student Photo" },
+                      { key: "birthCertificate",  label: "Birth Certificate" },
+                    ].map((doc) => (
+                      <div
+                        key={doc.key}
+                        className="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-2xl hover:border-blue-400 transition-colors"
+                      >
                         <div className="flex items-center gap-3">
                           <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
                             <FileText size={20} />
                           </div>
                           <span className="text-sm font-black text-slate-700 uppercase tracking-tighter">
-                            {doc.replace(/([A-Z])/g, ' $1').trim()}
+                            {doc.label}
                           </span>
                         </div>
-                        {selectedStudent[doc] ? (
-                           <a 
-                             href={selectedStudent[doc]} 
-                             target="_blank" 
-                             rel="noreferrer"
-                             className="p-2 bg-slate-100 text-slate-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all"
-                           >
-                             <Download size={16} />
-                           </a>
+                        {selectedStudent[doc.key] ? (
+                          <a 
+                            href={selectedStudent[doc.key]} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            className="p-2 bg-slate-100 text-slate-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all"
+                          >
+                            <Download size={16} />
+                          </a>
                         ) : (
                           <span className="text-[10px] font-bold text-slate-300 uppercase">Not Provided</span>
                         )}
@@ -231,14 +294,23 @@ const ViewStudent = () => {
                     ))}
                   </div>
 
-                  {/* ID Card Preview (Mini) */}
-                  <div className="p-6 bg-gradient-to-br from-blue-600 to-blue-800 rounded-3xl text-white relative overflow-hidden shadow-xl shadow-blue-100 mt-4">
-                      <div className="relative z-10">
-                        <p className="text-[10px] font-black tracking-widest opacity-60 uppercase mb-4">Official Student ID</p>
-                        <p className="text-2xl font-black italic mb-1 uppercase tracking-tighter">{selectedStudent.fullName}</p>
-                        <p className="font-mono text-sm opacity-80">{selectedStudent.studentId}</p>
-                      </div>
-                      <GraduationCap className="absolute right-[-20px] bottom-[-20px] opacity-10 w-32 h-32" />
+                  {/* ID Card Preview */}
+                  <div className="p-6 bg-gradient-to-br from-blue-600 to-blue-800 rounded-3xl text-white relative overflow-hidden shadow-xl shadow-blue-100">
+                    <div className="relative z-10">
+                      <p className="text-[10px] font-black tracking-widest opacity-60 uppercase mb-4">
+                        Official Student ID
+                      </p>
+                      <p className="text-2xl font-black italic mb-1 uppercase tracking-tighter">
+                        {selectedStudent.fullName}
+                      </p>
+                      <p className="font-mono text-sm opacity-80">{selectedStudent.studentId}</p>
+                      {selectedStudent.class && (
+                        <p className="text-xs opacity-60 mt-1 uppercase tracking-widest font-bold">
+                          Class {selectedStudent.class} — {selectedStudent.section}
+                        </p>
+                      )}
+                    </div>
+                    <GraduationCap className="absolute right-[-20px] bottom-[-20px] opacity-10 w-32 h-32" />
                   </div>
                 </div>
 
@@ -246,17 +318,21 @@ const ViewStudent = () => {
             </div>
             
             {/* Modal Footer */}
-            <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
-               <button 
-                 onClick={() => setIsModalOpen(false)}
-                 className="px-8 py-3 bg-slate-200 text-slate-700 font-black text-[11px] uppercase tracking-widest rounded-xl hover:bg-slate-300 transition-all"
-                >
-                  Close
-               </button>
-               <button className="px-8 py-3 bg-blue-600 text-white font-black text-[11px] uppercase tracking-widest rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200">
-                  Print Profile
-               </button>
+            <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 shrink-0">
+              <button 
+                onClick={() => setIsModalOpen(false)}
+                className="px-8 py-3 bg-slate-200 text-slate-700 font-black text-[11px] uppercase tracking-widest rounded-xl hover:bg-slate-300 transition-all"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => window.print()}
+                className="px-8 py-3 bg-blue-600 text-white font-black text-[11px] uppercase tracking-widest rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200"
+              >
+                Print Profile
+              </button>
             </div>
+
           </div>
         </div>
       )}

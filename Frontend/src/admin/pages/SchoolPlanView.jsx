@@ -16,7 +16,6 @@ const SchoolPlanView = () => {
   const fetchPlans = async () => {
     setLoading(true);
     try {
-      // API call same rahegi kyunki plans ka data wahi se aana hai
       const res = await apiClient.get("/api/superadmin/get-plans");
       const plansData = res.data.plans || res.data.data || [];
       setPlans(Array.isArray(plansData) ? plansData : []);
